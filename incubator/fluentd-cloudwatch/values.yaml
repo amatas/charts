@@ -1,4 +1,4 @@
-logtype: elasticsearch # Possible options: elasticsearch|cloudwatch
+logtype: cloudwatch # Possible options: elasticsearch|cloudwatch
 
 image: fluent/fluentd-kubernetes-daemonset
 

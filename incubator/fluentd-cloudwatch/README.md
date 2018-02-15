@@ -1,6 +1,6 @@
 # Fluentd CloudWatch
 
-* Installs [Fluentd](https://www.fluentd.org/) [Cloudwatch](https://aws.amazon.com/cloudwatch/) log forwarder.
+* Installs [Fluentd](https://www.fluentd.org/) [Cloudwatch](https://aws.amazon.com/cloudwatch/) log forwarder (Default).
 * Installs [Fluentd](https://www.fluentd.org/) [ElasticSearch](https://github.com/elastic/elasticsearch) log forwarder.
 
 ## TL;DR;
@@ -44,7 +44,7 @@ logtype: elasticsearch #logtype must be elasticsearch
 
 elasticsearch:
   ImageTag: "elasticsearch"
-  prefix: "default"
+  prefix: "default_"
   host: "es.host.net"
   port: "9243"
   scheme: "https"
@@ -71,7 +71,7 @@ $ helm delete my-release
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## CloudWatch Configuration
+## Configuration
 
 The following tables lists the configurable parameters of the Fluentd Cloudwatch chart and their default values.
 
@@ -90,6 +90,7 @@ The following tables lists the configurable parameters of the Fluentd Cloudwatch
 | `awsRole`                       | AWS IAM Role To Use                        | `nil`                                                      |
 | `fluentdConfig`                 | Fluentd configuration                      | `example configuration`                                    |
 | `logGroupName`                  | AWS Cloudwatch log group                   | `kubernetes`                                               |
+| `logtype`                       | `elasticearch` or `cloudwatch`             | `cloudwatch`                                               |
 | `rbac.create`                   | If true, create & use RBAC resources       | `false`                                                    |
 | `rbac.serviceAccountName`       | existing ServiceAccount to use (ignored if rbac.create=true) | `default`                                |
 

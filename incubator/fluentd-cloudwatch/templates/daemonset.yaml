@@ -1,9 +1,10 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: {{ template "fluentd-cloudwatch.fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "fluentd-cloudwatch.name" . }}
+    app: {{ template "fluentd.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: "{{ .Release.Service }}"
     release: "{{ .Release.Name }}"
@@ -11,21 +12,65 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ template "fluentd-cloudwatch.name" . }}
+        app: {{ template "fluentd.name" . }}
         release: "{{ .Release.Name }}"
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{ if .Values.awsRole }}iam.amazonaws.com/role: {{ .Values.awsRole }}{{ end }}
 {{- if .Values.podAnnotations }}
-{{ toYaml .Values.annotations | indent 8 }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      serviceAccountName: {{ if .Values.rbac.create }}{{ template "fluentd-cloudwatch.fullname" . }}{{ else }}"{{ .Values.rbac.serviceAccountName }}"{{ end }}
+      serviceAccountName: {{ if .Values.rbac.create }}{{ template "fluentd.fullname" . }}{{ else }}"{{ .Values.rbac.serviceAccountName }}"{{ end }}
+{{- if .Values.runOnMasters }}
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+{{- end }}
       containers:
-      - name: {{ template "fluentd-cloudwatch.fullname" . }}
-        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+      - name: {{ template "fluentd.fullname" . }}
+{{- if eq .Values.logtype "cloudwatch" }}
+        image: "{{ .Values.image }}:{{ .Values.cloudwatch.ImageTag }}"
+{{- end }}
+{{- if eq .Values.logtype "elasticsearch" }}
+        image: "{{ .Values.image }}:{{ .Values.elasticsearch.ImageTag }}"
+{{- end }}
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
         #hostNetwork: {{ default false .Values.hostNetwork }}
         env:
+{{- if eq .Values.logtype "elasticsearch" }}
+        - name: FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_prefix
+              name: {{ template "fluentd.fullname" . }}   
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_host
+              name: {{ template "fluentd.fullname" . }}
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_port
+              name: {{ template "fluentd.fullname" . }}
+        - name: FLUENT_ELASTICSEARCH_SCHEME
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_scheme
+              name: {{ template "fluentd.fullname" . }}
+        - name: FLUENT_ELASTICSEARCH_USER
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_user
+              name: {{ template "fluentd.fullname" . }}
+        - name: FLUENT_ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: elasticsearch_password
+              name: {{ template "fluentd.fullname" . }}
+{{- end}}
+{{- if eq .Values.logtype "cloudwatch" }}
         - name: AWS_REGION
           value: {{ .Values.awsRegion }}
         - name: LOG_GROUP_NAME
@@ -35,12 +80,13 @@ spec:
           valueFrom:
             secretKeyRef:
               key: aws_access_key_id
-              name: {{ template "fluentd-cloudwatch.fullname" . }}
+              name: {{ template "fluentd.fullname" . }}
         - name: AWS_SECRET_ACCESS_KEY
           valueFrom:
             secretKeyRef:
               key: aws_secret_access_key
-              name: {{ template "fluentd-cloudwatch.fullname" . }}
+              name: {{ template "fluentd.fullname" . }}
+{{- end }}
 {{- end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
@@ -62,4 +108,4 @@ spec:
           path: /var/lib/docker/containers
       - name: config-volume
         configMap:
-          name: {{ template "fluentd-cloudwatch.fullname" . }}
+          name: {{ template "fluentd.fullname" . }}

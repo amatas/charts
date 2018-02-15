@@ -1,11 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "fluentd-cloudwatch.fullname" . }}
+  name: {{ template "fluentd.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "fluentd-cloudwatch.name" . }}
+    app: {{ template "fluentd.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
 data:
-  fluent.conf: {{ toYaml .Values.fluentdConfig | indent 2 }}
+  fluent.conf: {{ if eq .Values.logtype "elasticsearch" }}{{ toYaml (printf "%s%s" .Values.fluentdCommonConfig .Values.elasticsearch.fluentdElasticsearchConfig) | indent 2 }}{{ end }}
+  {{- if eq .Values.logtype "cloudwatch" }}{{ toYaml (printf "%s%s" .Values.fluentdCommonConfig .Values.cloudwatch.fluentdCloudwatchConfig) | indent 2 }}{{ end }}
+  

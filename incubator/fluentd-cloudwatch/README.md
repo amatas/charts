@@ -1,34 +1,65 @@
 # Fluentd CloudWatch
 
 * Installs [Fluentd](https://www.fluentd.org/) [Cloudwatch](https://aws.amazon.com/cloudwatch/) log forwarder.
+* Installs [Fluentd](https://www.fluentd.org/) [ElasticSearch](https://github.com/elastic/elasticsearch) log forwarder.
 
 ## TL;DR;
 
 ```console
-$ helm install incubator/fluentd-cloudwatch
+$ helm install incubator/fluentd
 ```
 
 ## Introduction
 
-This chart bootstraps a [Fluentd](https://www.fluentd.org/) [Cloudwatch](https://aws.amazon.com/cloudwatch/) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [Fluentd](https://www.fluentd.org/) log forwarder deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager. It supports the following collectors:
+  * [Cloudwatch](https://aws.amazon.com/cloudwatch/)
+  * [ElasticSearch](https://github.com/elastic/elasticsearch)
 
 ## Prerequisites
 
 - Kubernetes 1.4+ with Beta APIs enabled
 - [kube2iam](../../stable/kube2iam) installed to used the **awsRole** config option
 
-## Installing the Chart
+## Installing the Chart for Clowdwatch collector.
 
 To install the chart with the release name `my-release`:
 
 ```console
-$ # edit secrets/aws_access_key_id and secrets/aws_access_key_id with the key/password of a AWS user with a policy to access  Cloudwatch
+$ # edit secrets/aws_access_key_id and secrets/aws_access_key_id with the key/password of a AWS user with a policy to access Cloudwatch
 $ helm install --name my-release incubator/fluentd-cloudwatch
 $ # or add a role to aws with the correct policy to add to cloud watch
 $ helm install --name my-release incubator/fluentd-cloudwatch --set awsRole=roll_name_here
 ```
 
 The command deploys Fluentd Cloudwatch on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+
+## Installing the Chart for ElasticSearch collector.
+
+To install the chart with the release name `my-release`:
+
+Create a values.yaml file with the following:
+
+```yaml
+logtype: elasticsearch #logtype must be elasticsearch
+
+elasticsearch:
+  ImageTag: "elasticsearch"
+  prefix: "default"
+  host: "es.host.net"
+  port: "9243"
+  scheme: "https"
+  user: "test_user"
+  password: "test_password"
+```
+
+Run the following command:
+
+```console
+$ helm install -f values.yaml --name my-release incubator/fluentd
+```
+
+The command deploys Fluentd on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+
 
 ## Uninstalling the Chart
 
@@ -40,7 +71,7 @@ $ helm delete my-release
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration
+## CloudWatch Configuration
 
 The following tables lists the configurable parameters of the Fluentd Cloudwatch chart and their default values.
 
@@ -67,11 +98,11 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 $ helm install --name my-release \
   --set awsRegion=us-east-1 \
-    incubator/fluentd-cloudwatch
+    incubator/fluentd
 ```
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install --name my-release -f values.yaml incubator/fluentd-cloudwatch
+$ helm install --name my-release -f values.yaml incubator/fluentd
 ```
